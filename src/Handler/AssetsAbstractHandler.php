@@ -13,6 +13,4 @@ abstract class AssetsAbstractHandler implements AssetsHandlerInterface
     {
         return new Asset($this, $name);
     }
-
-    abstract public function sendToClient(Asset $asset);
 }

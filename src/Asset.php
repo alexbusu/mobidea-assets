@@ -31,4 +31,14 @@ class Asset
     {
         $this->handler->sendToClient($this);
     }
+
+    public function persist(string $newPath = null): self
+    {
+        return $this->handler->persist($this, $newPath);
+    }
+
+    public function getSourcePath()
+    {
+        return $this->handler->getSourcePath($this);
+    }
 }

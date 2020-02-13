@@ -8,7 +8,6 @@ namespace Ola\Assets\Handler;
 use Ola\Assets\Asset;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\Stream;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class FilesystemHandler extends AssetsAbstractHandler
@@ -28,7 +27,7 @@ class FilesystemHandler extends AssetsAbstractHandler
     public function sendToClient(Asset $asset)
     {
         /** @noinspection PhpUnhandledExceptionInspection */
-        $stream = new Stream($this->getFilepath($asset));
+        $stream = new Stream($this->getSourcePath($asset));
         $response = new BinaryFileResponse($stream);
         $response->headers->set('Content-Type', $stream->getMimeType());
         $response->setContentDisposition(
@@ -38,7 +37,24 @@ class FilesystemHandler extends AssetsAbstractHandler
         $response->send();
     }
 
-    private function getFilepath(Asset $asset): string
+    public function persist(Asset $asset, string $newPath = null): Asset
+    {
+        $newAsset = $newPath ? $this->asset($newPath) : clone $asset;
+        /**
+         * First argument of copy is result of {@see Asset::getSourcePath()}
+         *      since we want the original asset handler's path
+         * The 2nd argument of copy is result of {@see AssetsAbstractHandler::getSourcePath()}
+         *      since we want _this_ asset handler's path
+         * @todo make operation to work with streams, so that the copy can be possible from handlers like Aws' S3
+         */
+        if (!copy($asset->getSourcePath(), $this->getSourcePath($newAsset))) {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            throw new \LogicException('could not persist (copy) the asset');
+        }
+        return $newAsset;
+    }
+
+    public function getSourcePath(Asset $asset): string
     {
         return $this->basepath . DIRECTORY_SEPARATOR . ltrim($asset->getPath(), '\\/');
     }

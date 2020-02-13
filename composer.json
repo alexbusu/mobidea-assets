@@ -7,6 +7,9 @@
       "Ola\\Assets\\": "./src"
     }
   },
+  "require": {
+    "symfony/http-foundation": "~3 || ~4"
+  },
   "suggest": {
     "aws/aws-sdk-php": "~3.133"
   }
