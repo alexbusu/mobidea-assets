@@ -1,0 +1,13 @@
+{
+  "name": "olamobile/assets",
+  "license": "proprietary",
+  "version": "0.1",
+  "autoload": {
+    "psr-4": {
+      "Ola\\Assets\\": "./src"
+    }
+  },
+  "suggest": {
+    "aws/aws-sdk-php": "~3.133"
+  }
+}
