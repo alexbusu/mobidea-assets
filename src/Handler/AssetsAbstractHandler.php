@@ -29,6 +29,6 @@ abstract class AssetsAbstractHandler implements AssetsHandlerInterface
 
     protected function getAssetResource(Asset $asset)
     {
-        return $this->assetResources->offsetGet($asset);
+        return $this->assetResources->offsetExists($asset) ? $this->assetResources->offsetGet($asset) : null;
     }
 }

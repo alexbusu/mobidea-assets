@@ -40,14 +40,16 @@ class FilesystemHandler extends AssetsAbstractHandler
 
     public function persist(Asset $asset, string $newPath = null): Asset
     {
-        $newAsset = $newPath ? $this->asset($newPath) : clone $asset;
+        $newAsset = $this->asset($newPath ?? $asset->getPath());
         /**
          * Use result of {@see AssetsAbstractHandler::getSourcePath()}
          *  instead of {@see Asset::getSourcePath()}
          *  since we want _this_ handler's path for $asset.
          */
         $targetPath = $this->getSourcePath($newAsset);
-        if (($targetStream = fopen($targetPath, 'w+')) === false) {
+        $targetDir = dirname($targetPath);
+        if ((!is_dir($targetDir) && !mkdir($targetDir, 644, true))
+            || ($targetStream = fopen($targetPath, 'w+')) === false) {
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new LogicException("could not open path [{$targetPath}]");
         }
