@@ -30,6 +30,7 @@ class AwsS3Handler extends AssetsAbstractHandler
     {
         $this->s3Client = $s3Client;
         $this->bucket = $bucket;
+        parent::__construct();
     }
 
     public function sendToClient(Asset $asset)
@@ -87,12 +88,17 @@ class AwsS3Handler extends AssetsAbstractHandler
      * @param Asset $asset
      * @return AwsResult
      */
-    public function getRemoteObject(Asset $asset): AwsResult
+    private function getRemoteObject(Asset $asset): AwsResult
     {
-        return $this->s3Client->getObject([
+        if ($cached = $this->getAssetResource($asset)) {
+            return $cached;
+        }
+        $object = $this->s3Client->getObject([
             'Bucket' => $this->bucket,
             'Key' => $asset->getPath(),
         ]);
+        $this->setAssetResource($asset, $object);
+        return $object;
     }
 
     private function putRemoteObject(string $sourcePath, string $remotePath): AwsResult
@@ -102,5 +108,18 @@ class AwsS3Handler extends AssetsAbstractHandler
             'Key' => $remotePath,
             'SourceFile' => $sourcePath,
         ]);
+    }
+
+    /** @noinspection PhpUnhandledExceptionInspection */
+    public function getResourceStream(Asset $asset)
+    {
+        /** @var AwsResult $object */
+        $object = $this->getRemoteObject($asset);
+        /** @var GuzzleHttpStream $assetStream */
+        $assetStream = $object->get('Body');
+        $stream = fopen('php://temp', 'r+');
+        $assetStream->rewind();
+        fwrite($stream, $assetStream->getContents());
+        return $stream;
     }
 }

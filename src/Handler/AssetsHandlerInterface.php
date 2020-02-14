@@ -13,7 +13,9 @@ interface AssetsHandlerInterface
 
     public function sendToClient(Asset $asset);
 
-    public function persist(Asset $asset): Asset;
+    public function persist(Asset $asset, string $newPath = null): Asset;
 
     public function getSourcePath(Asset $asset): string;
+
+    public function getResourceStream(Asset $asset);
 }

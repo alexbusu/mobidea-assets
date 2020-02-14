@@ -41,4 +41,9 @@ class Asset
     {
         return $this->handler->getSourcePath($this);
     }
+
+    public function getResourceStream()
+    {
+        return $this->handler->getResourceStream($this);
+    }
 }

@@ -5,6 +5,7 @@
 
 namespace Ola\Assets\Handler;
 
+use LogicException;
 use Ola\Assets\Asset;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\Stream;
@@ -12,16 +13,16 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class FilesystemHandler extends AssetsAbstractHandler
 {
+    /** @var string */
     private $assetsType = '';
-    /**
-     * @var string
-     */
+    /** @var string */
     private $basepath;
 
     public function __construct(string $assetsType, string $basepath)
     {
         $this->assetsType = $assetsType;
         $this->basepath = rtrim($basepath, DIRECTORY_SEPARATOR) ?: DIRECTORY_SEPARATOR;
+        parent::__construct();
     }
 
     public function sendToClient(Asset $asset)
@@ -41,21 +42,32 @@ class FilesystemHandler extends AssetsAbstractHandler
     {
         $newAsset = $newPath ? $this->asset($newPath) : clone $asset;
         /**
-         * First argument of copy is result of {@see Asset::getSourcePath()}
-         *      since we want the original asset handler's path
-         * The 2nd argument of copy is result of {@see AssetsAbstractHandler::getSourcePath()}
-         *      since we want _this_ asset handler's path
-         * @todo make operation to work with streams, so that the copy can be possible from handlers like Aws' S3
+         * Use result of {@see AssetsAbstractHandler::getSourcePath()}
+         *  instead of {@see Asset::getSourcePath()}
+         *  since we want _this_ handler's path for $asset.
          */
-        if (!copy($asset->getSourcePath(), $this->getSourcePath($newAsset))) {
+        $targetPath = $this->getSourcePath($newAsset);
+        if (($targetStream = fopen($targetPath, 'w+')) === false) {
             /** @noinspection PhpUnhandledExceptionInspection */
-            throw new \LogicException('could not persist (copy) the asset');
+            throw new LogicException("could not open path [{$targetPath}]");
         }
+        $sourceStream = $asset->getResourceStream();
+        if (stream_copy_to_stream($sourceStream, $targetStream) === false) {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            throw new LogicException('could not persist (copy) the asset');
+        }
+        fclose($sourceStream);
+        fclose($targetStream);
         return $newAsset;
     }
 
     public function getSourcePath(Asset $asset): string
     {
         return $this->basepath . DIRECTORY_SEPARATOR . ltrim($asset->getPath(), '\\/');
+    }
+
+    public function getResourceStream(Asset $asset)
+    {
+        return fopen($this->getSourcePath($asset), 'r');
     }
 }
