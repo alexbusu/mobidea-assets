@@ -3,12 +3,12 @@
  * Copyright (c) 2020 www.olamobile.com
  */
 
-namespace Ola\Assets\Handler;
+namespace Ola\Assets\StorageAdapters;
 
 use Ola\Assets\Asset;
 use SplObjectStorage;
 
-abstract class AssetsAbstractHandler implements AssetsHandlerInterface
+abstract class StorageAdapter implements StorageAdapterInterface
 {
     private $assetResources;
 

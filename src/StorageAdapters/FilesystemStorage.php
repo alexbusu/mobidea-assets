@@ -3,7 +3,7 @@
  * Copyright (c) 2020 www.olamobile.com
  */
 
-namespace Ola\Assets\Handler;
+namespace Ola\Assets\StorageAdapters;
 
 use LogicException;
 use Ola\Assets\Asset;
@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\Stream;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
-class FilesystemHandler extends AssetsAbstractHandler
+class FilesystemStorage extends StorageAdapter
 {
     /** @var string */
     private $assetsType = '';
@@ -42,7 +42,7 @@ class FilesystemHandler extends AssetsAbstractHandler
     {
         $newAsset = $this->asset($newPath ?? $asset->getPath());
         /**
-         * Use result of {@see AssetsAbstractHandler::getSourcePath()}
+         * Use result of {@see StorageAdapter::getSourcePath()}
          *  instead of {@see Asset::getSourcePath()}
          *  since we want _this_ handler's path for $asset.
          */

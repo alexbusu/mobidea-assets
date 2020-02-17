@@ -3,7 +3,7 @@
  * Copyright (c) 2020 www.olamobile.com
  */
 
-namespace Ola\Assets\Handler;
+namespace Ola\Assets\StorageAdapters;
 
 use Aws\Result as AwsResult;
 use Aws\S3\S3ClientInterface;
@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnexpectedValueException;
 
-class AwsS3Handler extends AssetsAbstractHandler
+class AwsS3Storage extends StorageAdapter
 {
     /**
      * @var S3ClientInterface

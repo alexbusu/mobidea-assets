@@ -2,18 +2,18 @@
 
 namespace Ola\Assets;
 
-use Ola\Assets\Handler\AssetsAbstractHandler;
+use Ola\Assets\StorageAdapters\StorageAdapter;
 
 class Asset
 {
     /** @var string */
     private $path;
     /**
-     * @var AssetsAbstractHandler
+     * @var StorageAdapter
      */
     private $handler;
 
-    public function __construct(AssetsAbstractHandler $handler, string $path)
+    public function __construct(StorageAdapter $handler, string $path)
     {
         $this->handler = $handler;
         $this->path = $path;

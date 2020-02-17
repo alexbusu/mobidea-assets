@@ -3,11 +3,11 @@
  * Copyright (c) 2020 www.olamobile.com
  */
 
-namespace Ola\Assets\Handler;
+namespace Ola\Assets\StorageAdapters;
 
 use Ola\Assets\Asset;
 
-interface AssetsHandlerInterface
+interface StorageAdapterInterface
 {
     public function asset(string $name): Asset;
 
