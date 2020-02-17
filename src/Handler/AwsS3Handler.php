@@ -5,7 +5,6 @@
 
 namespace Ola\Assets\Handler;
 
-use Aws\Result;
 use Aws\Result as AwsResult;
 use Aws\S3\S3ClientInterface;
 use GuzzleHttp\Exception\TransferException;
@@ -64,9 +63,8 @@ class AwsS3Handler extends AssetsAbstractHandler
 
     public function persist(Asset $asset, string $newPath = null): Asset
     {
-        $newAsset = $newPath ? $this->asset($newPath) : clone $asset;
-        $object = $this->putRemoteObject($asset->getSourcePath(), $newAsset->getPath());
-        /** @var Result $object */
+        $newAsset = $this->asset($newPath ?: $asset->getPath());
+        $object = $this->putRemoteObject($asset->getResourceStream(), $newAsset->getPath());
         if (($code = $object->get('@metadata')['statusCode'] ?? null) !== 200) {
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new UnexpectedValueException("could not put the object; status code: {$code}");
@@ -101,25 +99,31 @@ class AwsS3Handler extends AssetsAbstractHandler
         return $object;
     }
 
-    private function putRemoteObject(string $sourcePath, string $remotePath): AwsResult
+    /**
+     * @param resource $stream
+     * @param string $remotePath
+     * @return AwsResult
+     */
+    private function putRemoteObject($stream, string $remotePath): AwsResult
     {
         return $this->s3Client->putObject([
             'Bucket' => $this->bucket,
             'Key' => $remotePath,
-            'SourceFile' => $sourcePath,
+            'Body' => $stream,
         ]);
     }
 
     /** @noinspection PhpUnhandledExceptionInspection */
+
     public function getResourceStream(Asset $asset)
     {
-        /** @var AwsResult $object */
         $object = $this->getRemoteObject($asset);
         /** @var GuzzleHttpStream $assetStream */
         $assetStream = $object->get('Body');
         $stream = fopen('php://temp', 'r+');
         $assetStream->rewind();
         fwrite($stream, $assetStream->getContents());
+        fseek($stream, 0, SEEK_SET);
         return $stream;
     }
 }
