@@ -46,4 +46,10 @@ class Asset
     {
         return $this->handler->getResourceStream($this);
     }
+
+    public function getContents()
+    {
+        $stream = $this->getResourceStream();
+        return stream_get_contents($stream); // $stream gets automatically closed by PHP
+    }
 }
