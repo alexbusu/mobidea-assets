@@ -84,4 +84,9 @@ class FilesystemStorage extends StorageAdapter
             throw new RuntimeException("the file cannot be deleted: $filepath");
         }
     }
+
+    public function exists(Asset $asset): bool
+    {
+        return is_file($this->getSourcePath($asset));
+    }
 }

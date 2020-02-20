@@ -140,4 +140,9 @@ class AwsS3Storage extends StorageAdapter
             throw new UnexpectedValueException("could not delete the object; status code: {$code}");
         }
     }
+
+    public function exists(Asset $asset): bool
+    {
+        return $this->s3Client->doesObjectExist($this->bucket, $asset->getPath());
+    }
 }

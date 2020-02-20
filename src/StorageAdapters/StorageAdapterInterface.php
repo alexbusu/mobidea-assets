@@ -26,4 +26,6 @@ interface StorageAdapterInterface
     public function getSourcePath(Asset $asset): string;
 
     public function getResourceStream(Asset $asset);
+
+    public function exists(Asset $asset): bool;
 }

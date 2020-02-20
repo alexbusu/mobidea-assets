@@ -11,11 +11,11 @@ class Asset
     /**
      * @var StorageAdapter
      */
-    private $handler;
+    private $storage;
 
     public function __construct(StorageAdapter $handler, string $path)
     {
-        $this->handler = $handler;
+        $this->storage = $handler;
         $this->path = $path;
     }
 
@@ -29,22 +29,22 @@ class Asset
 
     public function sendToClient()
     {
-        $this->handler->sendToClient($this);
+        $this->storage->sendToClient($this);
     }
 
     public function persist(string $newPath = null): self
     {
-        return $this->handler->persist($this, $newPath);
+        return $this->storage->persist($this, $newPath);
     }
 
     public function getSourcePath()
     {
-        return $this->handler->getSourcePath($this);
+        return $this->storage->getSourcePath($this);
     }
 
     public function getResourceStream()
     {
-        return $this->handler->getResourceStream($this);
+        return $this->storage->getResourceStream($this);
     }
 
     public function getContents()
@@ -55,6 +55,11 @@ class Asset
 
     public function delete()
     {
-        $this->handler->delete($this);
+        $this->storage->delete($this);
+    }
+
+    public function exists(): bool
+    {
+        $this->storage->exists($this);
     }
 }
