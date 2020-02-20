@@ -26,15 +26,15 @@ class FilesystemStorage extends StorageAdapter
         parent::__construct();
     }
 
-    public function sendToClient(Asset $asset)
+    public function sendToClient(Asset $asset, string $disposition = '', string $filename = '')
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         $stream = new Stream($this->getSourcePath($asset));
         $response = new BinaryFileResponse($stream);
         $response->headers->set('Content-Type', $stream->getMimeType());
         $response->setContentDisposition(
-            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            basename($asset->getPath())
+            $disposition ?: ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            $filename ?: basename($asset->getPath())
         );
         $response->send();
     }

@@ -9,9 +9,7 @@ use Aws\Result as AwsResult;
 use Aws\S3\S3ClientInterface;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Psr7\Stream as GuzzleHttpStream;
-use LogicException;
 use Ola\Assets\Asset;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnexpectedValueException;
@@ -34,7 +32,7 @@ class AwsS3Storage extends StorageAdapter
         parent::__construct();
     }
 
-    public function sendToClient(Asset $asset)
+    public function sendToClient(Asset $asset, string $disposition = '', string $filename = '')
     {
         $object = $this->getRemoteObject($asset);
         /** @var GuzzleHttpStream $stream */
@@ -54,8 +52,8 @@ class AwsS3Storage extends StorageAdapter
         });
         /** @noinspection PhpUnhandledExceptionInspection */
         $disposition = $response->headers->makeDisposition(
-            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            basename($asset->getPath())
+            $disposition ?: ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            $filename ?: basename($asset->getPath())
         );
         $response->headers->set('Content-Length', $stream->getSize());
         $response->headers->set('Content-Type', $object->get('ContentType'));

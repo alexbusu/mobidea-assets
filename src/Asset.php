@@ -3,6 +3,7 @@
 namespace Ola\Assets;
 
 use Ola\Assets\StorageAdapters\StorageAdapter;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class Asset
 {
@@ -27,9 +28,11 @@ class Asset
         return $this->path;
     }
 
-    public function sendToClient()
-    {
-        $this->storage->sendToClient($this);
+    public function sendToClient(
+        string $filename = '',
+        string $disposition = ResponseHeaderBag::DISPOSITION_ATTACHMENT
+    ) {
+        $this->storage->sendToClient($this, $disposition, $filename);
     }
 
     public function persist(string $newPath = null): self
@@ -49,8 +52,12 @@ class Asset
 
     public function getContents()
     {
-        $stream = $this->getResourceStream();
-        return stream_get_contents($stream); // $stream gets automatically closed by PHP
+        try {
+            $stream = $this->getResourceStream();
+            return stream_get_contents($stream);
+        } finally {
+            fclose($stream);
+        }
     }
 
     public function delete()
@@ -60,6 +67,6 @@ class Asset
 
     public function exists(): bool
     {
-        $this->storage->exists($this);
+        return $this->storage->exists($this);
     }
 }
