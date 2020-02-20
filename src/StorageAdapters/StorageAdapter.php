@@ -10,11 +10,11 @@ use SplObjectStorage;
 
 abstract class StorageAdapter implements StorageAdapterInterface
 {
-    private $assetResources;
+    private $assetsCache;
 
     public function __construct()
     {
-        $this->assetResources = new SplObjectStorage();
+        $this->assetsCache = new SplObjectStorage();
     }
 
     public function asset(string $name): Asset
@@ -22,13 +22,18 @@ abstract class StorageAdapter implements StorageAdapterInterface
         return new Asset($this, $name);
     }
 
-    protected function setAssetResource(Asset $asset, $resource)
+    protected function setAssetCache(Asset $asset, $resource)
     {
-        $this->assetResources->offsetSet($asset, $resource);
+        $this->assetsCache->offsetSet($asset, $resource);
+    }
+
+    protected function invalidateAssetCache(Asset $asset)
+    {
+        $this->assetsCache->offsetUnset($asset);
     }
 
     protected function getAssetResource(Asset $asset)
     {
-        return $this->assetResources->offsetExists($asset) ? $this->assetResources->offsetGet($asset) : null;
+        return $this->assetsCache->offsetExists($asset) ? $this->assetsCache->offsetGet($asset) : null;
     }
 }

@@ -9,7 +9,9 @@ use Aws\Result as AwsResult;
 use Aws\S3\S3ClientInterface;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Psr7\Stream as GuzzleHttpStream;
+use LogicException;
 use Ola\Assets\Asset;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnexpectedValueException;
@@ -95,7 +97,7 @@ class AwsS3Storage extends StorageAdapter
             'Bucket' => $this->bucket,
             'Key' => $asset->getPath(),
         ]);
-        $this->setAssetResource($asset, $object);
+        $this->setAssetCache($asset, $object);
         return $object;
     }
 
@@ -125,5 +127,17 @@ class AwsS3Storage extends StorageAdapter
         fwrite($stream, $assetStream->getContents());
         fseek($stream, 0, SEEK_SET);
         return $stream;
+    }
+
+    public function delete(Asset $asset)
+    {
+        $result = $this->s3Client->deleteObject([
+            'Bucket' => $this->bucket,
+            'Key' => $asset->getPath(),
+        ]);
+        if (($code = $result->get('@metadata')['statusCode'] ?? null) !== 200) {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            throw new UnexpectedValueException("could not delete the object; status code: {$code}");
+        }
     }
 }

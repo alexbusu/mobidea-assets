@@ -7,6 +7,7 @@ namespace Ola\Assets\StorageAdapters;
 
 use LogicException;
 use Ola\Assets\Asset;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\Stream;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -71,5 +72,16 @@ class FilesystemStorage extends StorageAdapter
     public function getResourceStream(Asset $asset)
     {
         return fopen($this->getSourcePath($asset), 'r');
+    }
+
+    public function delete(Asset $asset)
+    {
+        $filepath = $this->getSourcePath($asset);
+        if (!is_file($filepath)) {
+            throw new LogicException("the file does not exist: $filepath");
+        }
+        if (!unlink($filepath)) {
+            throw new RuntimeException("the file cannot be deleted: $filepath");
+        }
     }
 }
