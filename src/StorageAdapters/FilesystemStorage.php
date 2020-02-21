@@ -56,8 +56,11 @@ class FilesystemStorage extends StorageAdapter
          */
         $targetPath = $this->getSourcePath($newAsset);
         $targetDir = dirname($targetPath);
-        if ((!is_dir($targetDir) && !mkdir($targetDir, 644, true))
-            || ($targetStream = fopen($targetPath, 'w+')) === false) {
+        if (!is_dir($targetDir) && !mkdir($targetDir, 755, true)) {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            throw new LogicException("could not create target directory [{$targetDir}]");
+        }
+        if (($targetStream = fopen($targetPath, 'w+')) === false) {
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new LogicException("could not open path [{$targetPath}]");
         }
