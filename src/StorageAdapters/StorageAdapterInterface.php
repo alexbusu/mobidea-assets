@@ -22,7 +22,13 @@ interface StorageAdapterInterface
      */
     public function sendToClient(Asset $asset, string $disposition = '', string $filename = '');
 
-    public function persist(Asset $asset, string $newPath = null): Asset;
+    /**
+     * @param Asset $asset
+     * @param string|null $newPath
+     * @param resource|null $newContent
+     * @return Asset
+     */
+    public function persist(Asset $asset, string $newPath = null, $newContent = null): Asset;
 
     /**
      * @param Asset $asset

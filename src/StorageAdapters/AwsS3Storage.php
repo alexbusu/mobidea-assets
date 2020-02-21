@@ -61,10 +61,10 @@ class AwsS3Storage extends StorageAdapter
         $response->send();
     }
 
-    public function persist(Asset $asset, string $newPath = null): Asset
+    public function persist(Asset $asset, string $newPath = null, $newContent = null): Asset
     {
         $newAsset = $this->asset($newPath ?: $asset->getPath());
-        $object = $this->putRemoteObject($asset->getResourceStream(), $newAsset->getPath());
+        $object = $this->putRemoteObject($newContent ?? $asset->getResourceStream(), $newAsset->getPath());
         if (($code = $object->get('@metadata')['statusCode'] ?? null) !== 200) {
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new UnexpectedValueException("could not put the object; status code: {$code}");
@@ -101,14 +101,14 @@ class AwsS3Storage extends StorageAdapter
 
     /**
      * @param resource $stream
-     * @param string $remotePath
+     * @param string $path
      * @return AwsResult
      */
-    private function putRemoteObject($stream, string $remotePath): AwsResult
+    private function putRemoteObject($stream, string $path): AwsResult
     {
         return $this->s3Client->putObject([
             'Bucket' => $this->bucket,
-            'Key' => $remotePath,
+            'Key' => $path,
             'Body' => $stream,
         ]);
     }

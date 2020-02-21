@@ -39,7 +39,14 @@ class FilesystemStorage extends StorageAdapter
         $response->send();
     }
 
-    public function persist(Asset $asset, string $newPath = null): Asset
+    /**
+     * @param Asset $asset
+     * @param string|null $newPath
+     * @param resource|null $newContent
+     * @return Asset
+     * @throws LogicException
+     */
+    public function persist(Asset $asset, string $newPath = null, $newContent = null): Asset
     {
         $newAsset = $this->asset($newPath ?? $asset->getPath());
         /**
@@ -54,7 +61,7 @@ class FilesystemStorage extends StorageAdapter
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new LogicException("could not open path [{$targetPath}]");
         }
-        $sourceStream = $asset->getResourceStream();
+        $sourceStream = is_resource($newContent) ? $newContent : $asset->getResourceStream();
         if (stream_copy_to_stream($sourceStream, $targetStream) === false) {
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new LogicException('could not persist (copy) the asset');
