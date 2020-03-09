@@ -9,7 +9,6 @@ use Aws\Result as AwsResult;
 use Aws\S3\S3ClientInterface;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Psr7\Stream as GuzzleHttpStream;
-use Ola\Assets\Asset;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnexpectedValueException;
@@ -32,9 +31,9 @@ class AwsS3Storage extends StorageAdapter
         parent::__construct();
     }
 
-    public function sendToClient(Asset $asset, string $disposition = '', string $filename = '')
+    public function sendToClient(string $filepath, string $disposition = '', string $filename = '')
     {
-        $object = $this->getRemoteObject($asset);
+        $object = $this->getRemoteObject($filepath);
         /** @var GuzzleHttpStream $stream */
         $stream = $object->get('Body');
         $response = new StreamedResponse(function () use (&$stream) {
@@ -53,7 +52,7 @@ class AwsS3Storage extends StorageAdapter
         /** @noinspection PhpUnhandledExceptionInspection */
         $disposition = $response->headers->makeDisposition(
             $disposition ?: ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            $filename ?: basename($asset->getPath())
+            $filename ?: basename($filepath)
         );
         $response->headers->set('Content-Length', $stream->getSize());
         $response->headers->set('Content-Type', $object->get('ContentType'));
@@ -61,20 +60,31 @@ class AwsS3Storage extends StorageAdapter
         $response->send();
     }
 
-    public function persist(Asset $asset, string $newPath = null, $newContent = null): Asset
+    /**
+     * @param string $filepath
+     * @param resource|string $contentStream
+     * @return bool
+     * @throws UnexpectedValueException
+     */
+    public function persist(string $filepath, $contentStream): bool
     {
-        $newAsset = $this->asset($newPath ?: $asset->getPath());
-        $object = $this->putRemoteObject($newContent ?? $asset->getResourceStream(), $newAsset->getPath());
+        $object = $this->putRemoteObject($contentStream, $filepath);
         if (($code = $object->get('@metadata')['statusCode'] ?? null) !== 200) {
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new UnexpectedValueException("could not put the object; status code: {$code}");
         }
-        return $newAsset;
+        return true;
     }
 
-    public function getSourcePath(Asset $asset): string
+    /**
+     * @param string $filepath
+     * @return string
+     * @noinspection PhpDocMissingThrowsInspection
+     * @internal
+     */
+    public function getSourcePath(string $filepath): string
     {
-        $object = $this->getRemoteObject($asset);
+        $object = $this->getRemoteObject($filepath);
         if (!($path = $object->get('@metadata')['effectiveUri'] ?? '')) {
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new UnexpectedValueException('could not fetch the source path');
@@ -83,24 +93,24 @@ class AwsS3Storage extends StorageAdapter
     }
 
     /**
-     * @param Asset $asset
+     * @param string $filepath
      * @return AwsResult
      */
-    private function getRemoteObject(Asset $asset): AwsResult
+    private function getRemoteObject(string $filepath): AwsResult
     {
-        if ($cached = $this->getAssetResource($asset)) {
+        if ($cached = $this->getAssetResource($filepath)) {
             return $cached;
         }
         $object = $this->s3Client->getObject([
             'Bucket' => $this->bucket,
-            'Key' => $asset->getPath(),
+            'Key' => $filepath,
         ]);
-        $this->setAssetCache($asset, $object);
+        $this->setAssetCache($filepath, $object);
         return $object;
     }
 
     /**
-     * @param resource $stream
+     * @param resource|string $stream
      * @param string $path
      * @return AwsResult
      */
@@ -114,10 +124,9 @@ class AwsS3Storage extends StorageAdapter
     }
 
     /** @noinspection PhpUnhandledExceptionInspection */
-
-    public function getResourceStream(Asset $asset)
+    public function getResourceStream(string $filepath)
     {
-        $object = $this->getRemoteObject($asset);
+        $object = $this->getRemoteObject($filepath);
         /** @var GuzzleHttpStream $assetStream */
         $assetStream = $object->get('Body');
         $stream = fopen('php://temp', 'r+');
@@ -127,11 +136,11 @@ class AwsS3Storage extends StorageAdapter
         return $stream;
     }
 
-    public function delete(Asset $asset)
+    public function delete(string $filepath)
     {
         $result = $this->s3Client->deleteObject([
             'Bucket' => $this->bucket,
-            'Key' => $asset->getPath(),
+            'Key' => $filepath,
         ]);
         if (($code = $result->get('@metadata')['statusCode'] ?? null) !== 200) {
             /** @noinspection PhpUnhandledExceptionInspection */
@@ -139,8 +148,8 @@ class AwsS3Storage extends StorageAdapter
         }
     }
 
-    public function exists(Asset $asset): bool
+    public function exists(string $filepath): bool
     {
-        return $this->s3Client->doesObjectExist($this->bucket, $asset->getPath());
+        return $this->s3Client->doesObjectExist($this->bucket, $filepath);
     }
 }

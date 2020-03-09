@@ -5,8 +5,8 @@
 
 namespace Ola\Assets\StorageAdapters;
 
-use Ola\Assets\Asset;
-use SplObjectStorage;
+use ArrayObject;
+use RuntimeException;
 
 abstract class StorageAdapter implements StorageAdapterInterface
 {
@@ -14,26 +14,36 @@ abstract class StorageAdapter implements StorageAdapterInterface
 
     public function __construct()
     {
-        $this->assetsCache = new SplObjectStorage();
+        $this->assetsCache = new ArrayObject();
     }
 
-    public function asset(string $name): Asset
+    protected function setAssetCache(string $filepath, $resource)
     {
-        return new Asset($this, $name);
+        $this->assetsCache->offsetSet($filepath, $resource);
     }
 
-    protected function setAssetCache(Asset $asset, $resource)
+    protected function invalidateAssetCache(string $filepath)
     {
-        $this->assetsCache->offsetSet($asset, $resource);
+        $this->assetsCache->offsetUnset($filepath);
     }
 
-    protected function invalidateAssetCache(Asset $asset)
+    protected function getAssetResource(string $filepath)
     {
-        $this->assetsCache->offsetUnset($asset);
+        return $this->assetsCache->offsetExists($filepath) ? $this->assetsCache->offsetGet($filepath) : null;
     }
 
-    protected function getAssetResource(Asset $asset)
+    public function getContents(string $filepath): string
     {
-        return $this->assetsCache->offsetExists($asset) ? $this->assetsCache->offsetGet($asset) : null;
+        try {
+            $stream = $this->getResourceStream($filepath);
+            $contents = stream_get_contents($stream);
+            if ($contents === false) {
+                /** @noinspection PhpUnhandledExceptionInspection */
+                throw new RuntimeException('cannot read from stream: ' . $filepath);
+            }
+            return $contents;
+        } finally {
+            fclose($stream);
+        }
     }
 }

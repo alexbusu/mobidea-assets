@@ -6,40 +6,51 @@
 namespace Ola\Assets\StorageAdapters;
 
 use Exception;
-use Ola\Assets\Asset;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 interface StorageAdapterInterface
 {
-    public function asset(string $name): Asset;
-
     /**
-     * @param Asset $asset
+     * @param string $filepath
      * @param string $disposition One of {@see ResponseHeaderBag::DISPOSITION_ATTACHMENT}
      *  or {@see ResponseHeaderBag::DISPOSITION_INLINE}
      * @param string $filename
-     * @return mixed
+     * @return void
      */
-    public function sendToClient(Asset $asset, string $disposition = '', string $filename = '');
+    public function sendToClient(
+        string $filepath,
+        string $disposition = ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+        string $filename = ''
+    );
 
     /**
-     * @param Asset $asset
-     * @param string|null $newPath
-     * @param resource|null $newContent
-     * @return Asset
+     * @param string $filepath
+     * @param resource $contentStream
+     * @return bool
      */
-    public function persist(Asset $asset, string $newPath = null, $newContent = null): Asset;
+    public function persist(string $filepath, $contentStream): bool;
 
     /**
-     * @param Asset $asset
+     * @param string $filepath
      * @return void
      * @throws Exception
      */
-    public function delete(Asset $asset);
+    public function delete(string $filepath);
 
-    public function getSourcePath(Asset $asset): string;
+    /**
+     * @param string $filepath
+     * @return string
+     * @internal
+     */
+    public function getSourcePath(string $filepath): string;
 
-    public function getResourceStream(Asset $asset);
+    /**
+     * @param string $filepath
+     * @return resource
+     */
+    public function getResourceStream(string $filepath);
 
-    public function exists(Asset $asset): bool;
+    public function getContents(string $filepath): string;
+
+    public function exists(string $filepath): bool;
 }

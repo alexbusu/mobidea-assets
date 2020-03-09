@@ -6,7 +6,6 @@
 namespace Ola\Assets\StorageAdapters;
 
 use LogicException;
-use Ola\Assets\Asset;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\Stream;
@@ -15,46 +14,42 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 class FilesystemStorage extends StorageAdapter
 {
     /** @var string */
-    private $assetsType = '';
+    private $assetsType;
     /** @var string */
-    private $basepath;
+    private $basePath;
 
-    public function __construct(string $assetsType, string $basepath)
+    public function __construct(string $assetsType, string $basePath)
     {
         $this->assetsType = $assetsType;
-        $this->basepath = rtrim($basepath, DIRECTORY_SEPARATOR) ?: DIRECTORY_SEPARATOR;
+        $this->basePath = rtrim($basePath, DIRECTORY_SEPARATOR) ?: DIRECTORY_SEPARATOR;
         parent::__construct();
     }
 
-    public function sendToClient(Asset $asset, string $disposition = '', string $filename = '')
-    {
+    public function sendToClient(
+        string $filepath,
+        string $disposition = ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+        string $filename = ''
+    ) {
         /** @noinspection PhpUnhandledExceptionInspection */
-        $stream = new Stream($this->getSourcePath($asset));
+        $stream = new Stream($this->getSourcePath($filepath));
         $response = new BinaryFileResponse($stream);
         $response->headers->set('Content-Type', $stream->getMimeType());
         $response->setContentDisposition(
             $disposition ?: ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            $filename ?: basename($asset->getPath())
+            $filename ?: basename($filepath)
         );
         $response->send();
     }
 
     /**
-     * @param Asset $asset
-     * @param string|null $newPath
-     * @param resource|null $newContent
-     * @return Asset
+     * @param string $filepath
+     * @param resource $contentStream
+     * @return true
      * @throws LogicException
      */
-    public function persist(Asset $asset, string $newPath = null, $newContent = null): Asset
+    public function persist(string $filepath, $contentStream): bool
     {
-        $newAsset = $this->asset($newPath ?? $asset->getPath());
-        /**
-         * Use result of {@see StorageAdapter::getSourcePath()}
-         *  instead of {@see Asset::getSourcePath()}
-         *  since we want _this_ handler's path for $asset.
-         */
-        $targetPath = $this->getSourcePath($newAsset);
+        $targetPath = $this->getSourcePath($filepath);
         $targetDir = dirname($targetPath);
         if (!is_dir($targetDir) && !mkdir($targetDir, 755, true)) {
             /** @noinspection PhpUnhandledExceptionInspection */
@@ -64,29 +59,34 @@ class FilesystemStorage extends StorageAdapter
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new LogicException("could not open path [{$targetPath}]");
         }
-        $sourceStream = is_resource($newContent) ? $newContent : $asset->getResourceStream();
+        $sourceStream = $contentStream;
         if (stream_copy_to_stream($sourceStream, $targetStream) === false) {
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new LogicException('could not persist (copy) the asset');
         }
         fclose($sourceStream);
         fclose($targetStream);
-        return $newAsset;
+        return true;
     }
 
-    public function getSourcePath(Asset $asset): string
+    /**
+     * @param string $filepath
+     * @return string
+     * @internal
+     */
+    public function getSourcePath(string $filepath): string
     {
-        return $this->basepath . DIRECTORY_SEPARATOR . ltrim($asset->getPath(), '\\/');
+        return $this->basePath . DIRECTORY_SEPARATOR . ltrim($filepath, '\\/');
     }
 
-    public function getResourceStream(Asset $asset)
+    public function getResourceStream(string $filepath)
     {
-        return fopen($this->getSourcePath($asset), 'r');
+        return fopen($this->getSourcePath($filepath), 'r');
     }
 
-    public function delete(Asset $asset)
+    public function delete(string $filepath)
     {
-        $filepath = $this->getSourcePath($asset);
+        $filepath = $this->getSourcePath($filepath);
         if (!is_file($filepath)) {
             throw new LogicException("the file does not exist: $filepath");
         }
@@ -95,8 +95,8 @@ class FilesystemStorage extends StorageAdapter
         }
     }
 
-    public function exists(Asset $asset): bool
+    public function exists(string $filepath): bool
     {
-        return is_file($this->getSourcePath($asset));
+        return is_file($this->getSourcePath($filepath));
     }
 }
