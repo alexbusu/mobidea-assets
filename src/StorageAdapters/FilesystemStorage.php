@@ -14,13 +14,10 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 class FilesystemStorage extends StorageAdapter
 {
     /** @var string */
-    private $assetsType;
-    /** @var string */
     private $basePath;
 
-    public function __construct(string $assetsType, string $basePath)
+    public function __construct(string $basePath)
     {
-        $this->assetsType = $assetsType;
         $this->basePath = rtrim($basePath, DIRECTORY_SEPARATOR) ?: DIRECTORY_SEPARATOR;
         parent::__construct();
     }
