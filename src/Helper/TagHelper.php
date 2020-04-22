@@ -5,12 +5,20 @@ namespace Ola\Assets\Helper;
 
 
 use Ola\Assets\Tags\AdvertiserIdTag;
+use Ola\Assets\Tags\FileExtensionTag;
 use Ola\Assets\Tags\HistoryIdTag;
 use Ola\Assets\Tags\TagInterface;
 use Ola\Assets\Tags\UserIdTag;
 
 class TagHelper
 {
+    const TAG_IDENTITY = 'identity';
+    const TAG_IDENTITY_ID = 'id';
+    const TAG_IDENTITY_INVOICE = 'invoice';
+    const TAG_PENDING = 'pending';
+    const TAG_IO = 'io';
+    const TAG_PICTURE = 'picture';
+
     /**
      * @param string $filepath
      * @return string[]|TagInterface[]|callable[]
@@ -25,12 +33,12 @@ class TagHelper
             $filepath,
             $matches
         )) {
-            $tags[] = 'identity';
+            $tags[] = self::TAG_IDENTITY;
             $tags[] = new UserIdTag((int)$matches['uid']);
             if (isset($matches['hid']) && ($matches['hid'] != '')) {
                 $tags[] = new HistoryIdTag((int)$matches['hid']);
             } elseif (isset($matches['uid'])) {
-                $tags[] = 'pending';
+                $tags[] = self::TAG_PENDING;
             }
             $tags[] = $matches['type'];
         }
@@ -39,8 +47,17 @@ class TagHelper
             $filepath,
             $matches
         )) {
-            $tags[] = 'io';
+            $tags[] = self::TAG_IO;
             $tags[] = new AdvertiserIdTag((int)$matches['aid']);
+        }
+        if (preg_match(
+            '%\bpublic-files-users/(?<uid>\d+).(?<ext>\w+)$%',
+            $filepath,
+            $matches
+        )) {
+            $tags[] = self::TAG_PICTURE;
+            $tags[] = new UserIdTag((int)$matches['uid']);
+            $tags[] = new FileExtensionTag((string)$matches['ext']);
         }
         return $tags;
     }
