@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Ola\Assets\Helper;
-
 
 use Ola\Assets\Tags\AdvertiserIdTag;
 use Ola\Assets\Tags\FileExtensionTag;
