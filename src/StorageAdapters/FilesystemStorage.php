@@ -48,7 +48,7 @@ class FilesystemStorage extends StorageAdapter
     {
         $targetPath = $this->getSourcePath($filepath);
         $targetDir = dirname($targetPath);
-        if (!is_dir($targetDir) && !mkdir($targetDir, 755, true)) {
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new LogicException("could not create target directory [{$targetDir}]");
         }
