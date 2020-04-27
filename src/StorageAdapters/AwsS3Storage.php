@@ -7,6 +7,7 @@ namespace Ola\Assets\StorageAdapters;
 
 use Aws\Result as AwsResult;
 use Aws\S3\S3ClientInterface;
+use finfo;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Psr7\Stream as GuzzleHttpStream;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -116,10 +117,15 @@ class AwsS3Storage extends StorageAdapter
      */
     private function putRemoteObject($stream, string $path): AwsResult
     {
+        fseek($stream, 0);
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->buffer(stream_get_contents($stream));
+        fseek($stream, 0);
         return $this->s3Client->putObject([
             'Bucket' => $this->bucket,
             'Key' => $path,
             'Body' => $stream,
+            'ContentType' => $mimeType,
         ]);
     }
 

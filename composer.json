@@ -8,6 +8,8 @@
     }
   },
   "require": {
+    "php": "7.* || 8.*",
+    "ext-fileinfo": "*",
     "symfony/http-foundation": "~3 || ~4"
   },
   "suggest": {
