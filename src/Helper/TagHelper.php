@@ -38,6 +38,9 @@ class TagHelper
             } elseif (isset($matches['uid'])) {
                 $tags[] = self::TAG_PENDING;
             }
+            /**
+             * $matches['type'] is one of {@see TagHelper::TAG_IDENTITY_ID} and {@see TagHelper::TAG_IDENTITY_INVOICE}
+             */
             $tags[] = $matches['type'];
         }
         if (preg_match(
